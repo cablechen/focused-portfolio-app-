@@ -1,59 +1,86 @@
+import { useEffect, useState } from 'react';
 import {
-  reactExtension,
-  Banner,
   BlockStack,
-  Checkbox,
+  reactExtension,
   Text,
+  Link,
+  Image,
+  TextBlock,
   useApi,
-  useApplyAttributeChange,
-  useInstructions,
-  useTranslate,
-} from "@shopify/ui-extensions-react/checkout";
+  Button,
+  View,
+  useExtensionApi,
+} from '@shopify/ui-extensions-react/checkout';
+import { coinpalApi } from "./utils";
 
 // 1. Choose an extension target
-export default reactExtension("purchase.checkout.block.render", () => (
-  <Extension />
-));
+export default reactExtension(
+    'purchase.thank-you.block.render',
+    () => <Extension />,
+);
 
 function Extension() {
-  const translate = useTranslate();
-  const { extension } = useApi();
-  const instructions = useInstructions();
-  const applyAttributeChange = useApplyAttributeChange();
+  const { orderConfirmation,query, selectedPaymentOptions, shop } = useApi();
+
+  const api1 = useApi();
 
 
-  // 2. Check instructions for feature availability, see https://shopify.dev/docs/api/checkout-ui-extensions/apis/cart-instructions for details
-  if (!instructions.attributes.canUpdateAttributes) {
-    // For checkouts such as draft order invoices, cart attributes may not be allowed
-    // Consider rendering a fallback UI or nothing at all, if the feature is unavailable
-    return (
-      <Banner title="checkout-ui" status="warning">
-        {translate("attributeChangesAreNotSupported")}
-      </Banner>
-    );
-  }
+  const orderNumber = orderConfirmation?.current?.number || "Loading...";
+  const orderId = orderConfirmation?.current?.order?.id || "Unknown";
+  const [paymentUrl, setPaymentUrl] = useState('');
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // 3. Render a UI
+  const paymentMethodType = selectedPaymentOptions?.current?.[0]?.type || "Unknown";
+  const paymentMethodHandle = selectedPaymentOptions?.current?.[0]?.handle || "N/A";
+  var isCoinpalPayment = paymentMethodType === "creditCard";
+
+
+  useEffect(() => {
+    async function fetchPaymentUrl() {
+      console.log(paymentMethodType);
+      isCoinpalPayment = 1;
+      if (isCoinpalPayment) {
+        try {
+          const currData = {
+            myshopifyDomain: shop?.myshopifyDomain,
+            orderId: orderId,
+          };
+          const resData = await coinpalApi(currData); // 确保 coinpalApi 返回 Promise
+          if (resData && resData.paymentUrl) {
+            setPaymentUrl(resData.paymentUrl);
+            setModalOpen(true); // 打开弹框
+          } else {
+            console.error("Error: paymentUrl not found in response", resData);
+          }
+        } catch (error) {
+          console.error("Error fetching paymentUrl:", error);
+        } finally {
+          setLoading(false); // 2. 数据加载完成后，隐藏 loading
+        }
+      }
+    }
+
+    fetchPaymentUrl();
+  }, [isCoinpalPayment, orderId, shop]);
+
   return (
-    <BlockStack border={"dotted"} padding={"tight"}>
-      <Banner title="checkout-ui">
-        {translate("welcome", {
-          target: <Text emphasis="italic">{extension.target}</Text>,
-        })}
-      </Banner>
-      <Checkbox onChange={onCheckboxChange}>
-        {translate("iWouldLikeAFreeGiftWithMyOrder")}
-      </Checkbox>
-    </BlockStack>
-  );
+      <BlockStack>
+        {loading ? (
+            <View minInlineSize="100%" blockAlignment="center" inlineAlignment="center" padding="base">
+              <Text size="large" emphasis="bold">Loading...</Text>
+            </View>
 
-  async function onCheckboxChange(isChecked) {
-    // 4. Call the API to modify checkout
-    const result = await applyAttributeChange({
-      key: "requestedFreeGift",
-      type: "updateAttribute",
-      value: isChecked ? "yes" : "no",
-    });
-    console.log("applyAttributeChange result", result);
-  }
+        ) : (
+            isCoinpalPayment && paymentUrl && (
+                <Link size="extraLarge" to={paymentUrl}>
+                  <BlockStack spacing="base">
+                    <Image source="https://www.coinpal.io/images/plug_coinpal.png" />
+                    <Button>CoinPal Payment</Button>
+                  </BlockStack>
+                </Link>
+            )
+        )}
+      </BlockStack>
+  );
 }
