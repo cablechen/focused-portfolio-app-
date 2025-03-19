@@ -1,13 +1,14 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "820ef76b08373bac055733e9aa04ee3c"
-application_url = "https://example.com/"
+application_url = "https://forums-fixes-cursor-default.trycloudflare.com"
 embedded = true
 name = "focused-portfolio-app"
 handle = "focused-portfolio-app-10"
 
 [build]
 include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 
 [webhooks]
 api_version = "2025-01"
@@ -25,7 +26,11 @@ api_version = "2025-01"
 scopes = "read_orders,write_orders,write_products,write_checkouts"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://forums-fixes-cursor-default.trycloudflare.com/auth/callback",
+  "https://forums-fixes-cursor-default.trycloudflare.com/auth/shopify/callback",
+  "https://forums-fixes-cursor-default.trycloudflare.com/api/auth/callback"
+]
 
 [pos]
 embedded = false
