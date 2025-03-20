@@ -47,9 +47,10 @@ function Extension() {
             orderId: orderId,
           };
           const resData = await coinpalApi(currData); // 确保 coinpalApi 返回 Promise
+          console.log(resData.paymentUrl);
           if (resData && resData.paymentUrl) {
             setPaymentUrl(resData.paymentUrl);
-            setModalOpen(true); // 打开弹框
+            setLoading(false); // 打开弹框
           } else {
             console.error("Error: paymentUrl not found in response", resData);
           }
