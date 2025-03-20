@@ -30,7 +30,7 @@ function Extension() {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [isCoinpal, setCoinpal] = useState('');
   const paymentMethodType = selectedPaymentOptions?.current?.[0]?.type || "Unknown";
   const paymentMethodHandle = selectedPaymentOptions?.current?.[0]?.handle || "N/A";
   var isCoinpalPayment = paymentMethodType === "creditCard";
@@ -38,16 +38,18 @@ function Extension() {
 
   useEffect(() => {
     async function fetchPaymentUrl() {
-      console.log(paymentMethodType);
-      isCoinpalPayment = 1;
-      if (isCoinpalPayment) {
+      if (paymentMethodType === "manualPayment") {
         try {
+          setCoinpal('1');
+          console.log(paymentMethodType);
           const currData = {
             myshopifyDomain: shop?.myshopifyDomain,
             orderId: orderId,
           };
           const resData = await coinpalApi(currData); // 确保 coinpalApi 返回 Promise
           console.log(resData.paymentUrl);
+          console.log(paymentMethodType);
+          console.log(isCoinpalPayment);
           if (resData && resData.paymentUrl) {
             setPaymentUrl(resData.paymentUrl);
             setLoading(false); // 打开弹框
@@ -63,18 +65,25 @@ function Extension() {
     }
 
     fetchPaymentUrl();
-  }, [isCoinpalPayment, orderId, shop]);
+  }, [orderId, shop]);
 
   return (
       <BlockStack>
+        {loading ? (
+            <View minInlineSize="100%" blockAlignment="center" inlineAlignment="center" padding="base">
+              <Text size="large" emphasis="bold">Loading...</Text>
+            </View>
 
+        ) : (
+            setCoinpal && paymentUrl && (
                 <Link size="extraLarge" to={paymentUrl}>
                   <BlockStack spacing="base">
                     <Image source="https://www.coinpal.io/images/plug_coinpal.png" />
                     <Button>CoinPal Payment</Button>
                   </BlockStack>
                 </Link>
-
+            )
+        )}
       </BlockStack>
   );
 }
