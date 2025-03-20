@@ -67,21 +67,14 @@ function Extension() {
 
   return (
       <BlockStack>
-        {loading ? (
-            <View minInlineSize="100%" blockAlignment="center" inlineAlignment="center" padding="base">
-              <Text size="large" emphasis="bold">Loading...</Text>
-            </View>
 
-        ) : (
-            isCoinpalPayment && paymentUrl && (
                 <Link size="extraLarge" to={paymentUrl}>
                   <BlockStack spacing="base">
                     <Image source="https://www.coinpal.io/images/plug_coinpal.png" />
                     <Button>CoinPal Payment</Button>
                   </BlockStack>
                 </Link>
-            )
-        )}
+
       </BlockStack>
   );
 }
